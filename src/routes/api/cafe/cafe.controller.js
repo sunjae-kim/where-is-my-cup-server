@@ -1,3 +1,5 @@
+// const logger = require('log4js').getLogger();
+
 // GET api/cafe/detail/:id
 exports.getDetail = (req, res) => {
   res.status(200).send(`GET /cafe/detail/${req.params.id} Success`);
@@ -5,7 +7,7 @@ exports.getDetail = (req, res) => {
 
 // POST api/cafe/detail/
 exports.postDetail = (req, res) => {
-  res.status(201).send(req.body.detail);
+  res.status(201).send(req.body);
 };
 
 // GET api/cafe/list/query
