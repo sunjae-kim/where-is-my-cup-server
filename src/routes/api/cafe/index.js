@@ -1,6 +1,12 @@
 const route = require('express').Router();
-const { getDetail } = require('./cafe.controller');
+const controller = require('./cafe.controller');
+const { authenticate } = require('../../../lib').middlewares;
 
-route.get('/detail/:id', getDetail);
+// detail
+route.get('/detail/:id', authenticate, controller.getDetail);
+route.post('/detail', authenticate, controller.postDetail);
+
+// list
+route.get('/list/:query', authenticate, controller.getList);
 
 module.exports = route;

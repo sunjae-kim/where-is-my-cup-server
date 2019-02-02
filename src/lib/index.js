@@ -1,1 +1,1 @@
-
+exports.middlewares = require('./middlewares');

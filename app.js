@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
+const logger = require('log4js').getLogger();
 
 const app = express();
 
@@ -23,5 +24,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`The server is listening on port ${port}`);
+  logger.info(`The server is listening on port ${port}`);
 });
