@@ -4,11 +4,26 @@ const { Users, validateUser } = require('../../model/users');
 const { signAccessToken, signRefreshToken } = require('../../lib');
 
 exports.login = async (req, res) => {
-  // TODO: Implement
-  const { password } = req.body;
-  const hash = '$2b$10$SjHz/MZHy0dGBIq2mUVzYOasnDqVIUc05T6dMDjQTPOjin75qMby6'; // 12345
+  // 사용자가 입력한 이메일이 데이터베이스에 존재하는지 확인한다.
+  const { email, password } = req.body;
+  const userExist = await Users.findOne({ email, oauth: 'local' });
+  if (!userExist) return res.status(400).send('존재하지 않는 이메일입니다.');
+
+  // 사용자가 입력한 패스워드가 일치하는지 확인한다.
+  const hash = userExist.password;
   const isAuthenticated = await bcrypt.compare(password, hash);
-  res.status(200).send(isAuthenticated);
+  if (!isAuthenticated) return res.status(400).send('비밀번호가 일치하지 않습니다.');
+
+  // 토큰을 발행한다.
+  const { _id } = userExist;
+  const secret = req.app.get('jwt-secret');
+  const accessToken = await signAccessToken({ _id, email }, secret);
+  const refreshToken = await signRefreshToken({ _id, email }, secret);
+
+  // 토큰을 헤더에 세팅하고 유저정보를 응답한다.
+  res.set('x-access-token', accessToken);
+  res.set('x-refresh-token', refreshToken);
+  return res.status(200).send({ userExist });
 };
 
 exports.register = async (req, res) => {
@@ -21,7 +36,7 @@ exports.register = async (req, res) => {
   {
     const { email } = req.body;
     const userExist = await Users.findOneByEmail(email);
-    if (userExist) return res.status(400).send('이미 존재하는 이메일 입니다.');
+    if (userExist) return res.status(400).send('이미 존재하는 이메일입니다.');
     user = { ...value, oauth: 'local' };
   }
 
@@ -37,5 +52,5 @@ exports.register = async (req, res) => {
   // 토큰을 헤더에 세팅하고 유저정보를 응답한다.
   res.set('x-access-token', accessToken);
   res.set('x-refresh-token', refreshToken);
-  return res.status(200).send({ user });
+  return res.status(201).send({ user });
 };

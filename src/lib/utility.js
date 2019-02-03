@@ -21,14 +21,14 @@ exports.signAccessToken = (userInfo, secret) => {
 
 /**
  *  @function
- *  30 일의 수명을 가지는 `refreshToken` 을 발행하는 함수
+ *  14 일의 수명을 가지는 `refreshToken` 을 발행하는 함수
  *  `accessToken` 을 재발행 할 때 사용된다.
  *  @param userInfo 토큰 payload 에 실을 최소한의 정보만 담는 객체
  *  @param secret 토큰 서명 시 사용되는 비밀 키
  */
 exports.signRefreshToken = (userInfo, secret) => {
   const tokenOption = {
-    expiresIn: '30d',
+    expiresIn: '14d',
     issuer: 'where-is-my-cup',
     subject: 'refreshToken',
   };

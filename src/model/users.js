@@ -4,7 +4,7 @@ const Joi = require('joi');
 const usersSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
-  password: { type: String },
+  password: { type: String, required: true },
   oauth: { type: String, enum: ['google', 'kakao', 'local'], required: true },
   createdAt: { type: Date, default: Date.now },
   tagId: { type: Schema.Types.ObjectId, ref: 'Tags' },
@@ -29,7 +29,7 @@ const validateUser = (user) => {
   const schema = {
     name: Joi.string().required(),
     email: Joi.string().required(),
-    password: Joi.string(),
+    password: Joi.string().required(),
     oauth: Joi.string(),
     createdAt: Joi.date(),
     tagId: Joi.string(),
