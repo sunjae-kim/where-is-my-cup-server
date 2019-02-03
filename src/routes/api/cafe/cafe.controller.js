@@ -10,7 +10,7 @@ exports.postDetail = (req, res) => {
   res.status(201).send(req.body);
 };
 
-// GET api/cafe/list/query
+// GET api/cafe/list/:query
 exports.getList = (req, res) => {
   res.status(200).send(`GET /cafe/list/${req.params.query} Success`);
 };

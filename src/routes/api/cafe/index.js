@@ -1,6 +1,6 @@
 const route = require('express').Router();
 const controller = require('./cafe.controller');
-const { authenticate } = require('../../../lib').middlewares;
+const { authenticate } = require('../../../lib');
 
 // detail
 route.get('/detail/:id', authenticate, controller.getDetail);

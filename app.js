@@ -31,9 +31,7 @@ mongoose.connect(
   },
 );
 
-
 const app = express();
-
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(cookieParser());
@@ -42,9 +40,11 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+app.set('jwt-secret', process.env.JWT_SECRET);
 const port = process.env.PORT || 3000;
 
 app.use('/api', require('./src/routes/api'));
+app.use('/oauth', require('./src/routes/oauth'));
 
 app.get('/', (req, res) => {
   res.status(200).send('Success');
