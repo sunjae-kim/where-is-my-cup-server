@@ -12,7 +12,7 @@ const signToken = util.promisify(jwt.sign);
  */
 exports.signAccessToken = (userInfo, secret) => {
   const tokenOption = {
-    expiresIn: '3h',
+    expiresIn: '1m',
     issuer: 'where-is-my-cup',
     subject: 'accessToken',
   };
@@ -34,3 +34,8 @@ exports.signRefreshToken = (userInfo, secret) => {
   };
   return signToken(userInfo, secret, tokenOption);
 };
+
+const log4js = require('log4js');
+log4js.configure(require('../../config').log4js);
+
+exports.getLogger = logger => log4js.getLogger(logger);

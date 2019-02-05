@@ -9,6 +9,16 @@ const config = {
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
     },
+    log4js: {
+      appenders: {
+        app: {
+          type: 'stdout',
+        },
+      },
+      categories: {
+        default: { appenders: ['app'], level: 'TRACE' },
+      },
+    },
   },
 };
 

@@ -4,7 +4,8 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const logger = require('log4js').getLogger();
+
+const logger = require('./src/lib').getLogger('Server');
 const { database } = require('./config');
 
 // database connect
