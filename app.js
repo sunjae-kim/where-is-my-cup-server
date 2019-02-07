@@ -8,30 +8,6 @@ const morgan = require('morgan');
 const logger = require('./src/lib').getLogger('Server');
 const { database } = require('./config');
 
-// database connect
-mongoose.connect(
-  `${database.host}:${database.port}`,
-  {
-    user: database.username,
-    pass: database.password,
-    dbName: database.dbName,
-    useNewUrlParser: true,
-  },
-  (error) => {
-    if (error) {
-      logger.error(error);
-    } else {
-      logger.info('The database is successfully connected!');
-      // connection test
-      // const { Schema } = mongoose;
-      // const users =
-      //   mongoose.model('users', new Schema({ username: String, type: String, admin: Boolean }));
-      // users.create({ username: 'admin', admin: true });
-      // users.find((err, result) => logger.debug(result));
-    }
-  },
-);
-
 const app = express();
 app.use(helmet());
 app.use(morgan('dev'));
@@ -54,3 +30,21 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   logger.info(`The server is listening on port ${port}`);
 });
+
+// database connection
+mongoose.connect(
+  `${database.host}:${database.port}`,
+  {
+    user: database.username,
+    pass: database.password,
+    dbName: database.dbName,
+    useNewUrlParser: true,
+  },
+  (error) => {
+    if (error) {
+      logger.error(error);
+    } else {
+      logger.info('The database is successfully connected!');
+    }
+  },
+);

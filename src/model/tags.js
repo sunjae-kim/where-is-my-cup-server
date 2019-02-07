@@ -1,4 +1,4 @@
-const { Schema, Model } = require('mongoose');
+const { Schema, model } = require('mongoose');
 const Joi = require('joi');
 
 const tagSchema = new Schema({
@@ -32,8 +32,8 @@ const validateCafe = (tag) => {
   return Joi.validate(tag, schema);
 };
 
-const Tags = new Model('Tag', tagSchema);
+const Tags = model('Tag', tagSchema);
 
 module.exports = {
-  cafeSchema: tagSchema, validateCafe, Tags,
+  tagSchema, validateCafe, Tags,
 };
