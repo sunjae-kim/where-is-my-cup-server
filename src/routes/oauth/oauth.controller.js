@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 
-const { Users, validateUser } = require('../../model/users');
+const { Users, validateUser } = require('../../model/user');
 const { signAccessToken, signRefreshToken } = require('../../lib');
 
 exports.login = async (req, res) => {
@@ -15,10 +15,10 @@ exports.login = async (req, res) => {
   if (!isAuthenticated) return res.status(400).send('비밀번호가 일치하지 않습니다.');
 
   // 토큰을 발행한다.
-  const { _id } = userExist;
+  const { _id, name } = userExist;
   const secret = req.app.get('jwt-secret');
-  const accessToken = await signAccessToken({ _id, email }, secret);
-  const refreshToken = await signRefreshToken({ _id, email }, secret);
+  const accessToken = await signAccessToken({ _id, email, name }, secret);
+  const refreshToken = await signRefreshToken({ _id, email, name }, secret);
 
   // 토큰을 헤더에 세팅하고 유저정보를 응답한다.
   res.set('x-access-token', accessToken);
@@ -44,13 +44,26 @@ exports.register = async (req, res) => {
   user = await Users.create(user);
 
   // 토큰을 발행한다.
-  const { _id, email } = user;
+  const { _id, email, name } = user;
   const secret = req.app.get('jwt-secret');
-  const accessToken = await signAccessToken({ _id, email }, secret);
-  const refreshToken = await signRefreshToken({ _id, email }, secret);
+  const accessToken = await signAccessToken({ _id, email, name }, secret);
+  const refreshToken = await signRefreshToken({ _id, email, name }, secret);
 
   // 토큰을 헤더에 세팅하고 유저정보를 응답한다.
   res.set('x-access-token', accessToken);
   res.set('x-refresh-token', refreshToken);
   return res.status(201).send({ user });
+};
+
+exports.access = async (req, res) => {
+  // 사용자가 보낸 토큰에서 payload 를 꺼낸다.
+  const { tokenPayload: { email, _id, name } } = req;
+
+  // Access 토큰을 발행한다.
+  const secret = req.app.get('jwt-secret');
+  const accessToken = await signAccessToken({ email, _id, name }, secret);
+
+  // 토큰을 헤더에 세팅하고 유저정보를 응답한다.
+  res.set('x-access-token', accessToken);
+  return res.status(200).send({ email, name });
 };

@@ -1,12 +1,14 @@
 const route = require('express').Router();
 const controller = require('./cafe.controller');
-const { authenticate } = require('../../../lib');
+const { checkToken } = require('../../../lib');
+
+const checkAccessToken = checkToken('x-access-token');
 
 // detail
-route.get('/detail/:id', authenticate, controller.getDetail);
-route.post('/detail', authenticate, controller.postDetail);
+route.get('/detail/:id', checkAccessToken, controller.getDetail);
+route.post('/detail', checkAccessToken, controller.postDetail);
 
 // list
-route.get('/list/:query', authenticate, controller.getList);
+route.get('/list/:query', checkAccessToken, controller.getList);
 
 module.exports = route;

@@ -4,46 +4,32 @@ const jwt = require('jsonwebtoken');
 const logger = require('./utility').getLogger('Middleware');
 
 const verifyToken = util.promisify(jwt.verify);
-const { signAccessToken } = require('./utility');
 
 /**
- *  @middleware
- *  Token 의 유효성을 확인한다. 토큰이 헤더에 없을 시 `400` status 응답
- *  1. Access Token 유효할 시 검증 성공 `next` 실행
- *  2. Access Token 만료 시 Refresh Token 을 확인하여 Access Token 재발급 후 `next` 실행
- *  3. Refresh Token 만료 시 사용자 재인증 필요 `401` status 응답
+ * @middleware
+ *  1. Token 의 유효성을 확인한다. 토큰이 헤더에 없을 시 `400` status 응답
+ *  2. Token 유효할 시 검증 성공 `next` 실행
+ *  3. Token 만료 시 `401` status 응답
+ * @param {string} token `x-access-token` 또는 `x-refresh-token` 이 입력된다.
  */
-exports.authenticate = async (req, res, next) => {
-  logger.trace('@ Authenticate : Checking access token');
+exports.checkToken = token => async (req, res, next) => {
+  logger.trace('@ Authentication : Checking token');
   const secret = req.app.get('jwt-secret');
   // Token 이 잘 실려있는지 확인한다.
-  const accessToken = req.headers['x-access-token'];
-  const refreshToken = req.headers['x-refresh-token'];
-  if (!(accessToken && refreshToken)) {
+  const JsonWebToken = req.headers[token];
+  if (!JsonWebToken) {
     logger.error('Token is not found');
-    return res.status(400).send('@ Authenticate : Token is not found');
+    return res.status(400).send('@ Authentication : Token is not found');
   }
 
-  // Access Token 의 만료여부를 확인한다.
+  // Token 의 만료여부를 확인한다.
   try {
-    await verifyToken(accessToken, secret);
+    const tokenPayload = await verifyToken(JsonWebToken, secret);
+    req.tokenPayload = tokenPayload;
     return next();
   } catch (error) {
-    logger.warn(`@ Authenticate : Access ${error.message}`);
-  }
-
-  // Refresh Token 의 만료여부를 확인한다.
-  logger.trace('@ Authenticate : Checking refresh token');
-  try {
-    const result = await verifyToken(refreshToken, secret);
-    const { _id, email } = result;
-    const newAccessToken = await signAccessToken({ _id, email }, secret);
-    res.set('x-access-token', newAccessToken);
-    logger.info('@ Authenticate : New access token has been issued :)');
-    return next();
-  } catch (error) {
-    logger.warn(`@ Authenticate : Refresh ${error.message}`);
-    return res.status(401).send('모든 토큰이 만료되었습니다 ;(');
+    logger.error(`@ Authentication : ${error.message}`);
+    return res.status(401).send('토큰이 만료되었습니다 ;(');
   }
 };
 
