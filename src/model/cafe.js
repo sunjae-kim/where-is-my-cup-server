@@ -1,5 +1,6 @@
 const { Schema, model } = require('mongoose');
 const Joi = require('joi');
+const { Tag } = require('./tag');
 
 const cafeSchema = new Schema({
   property: { type: Number, default: 0 },
@@ -13,7 +14,7 @@ const cafeSchema = new Schema({
   homepage: String,
   convenience: String,
   description: String,
-  tagId: { type: Schema.Types.ObjectId, ref: 'Tags' },
+  tags: { type: Schema.Types.ObjectId, ref: Tag },
 });
 
 const validateCafe = (cafe) => {
@@ -29,6 +30,7 @@ const validateCafe = (cafe) => {
     homepage: Joi.string(),
     convenience: Joi.string(),
     description: Joi.string(),
+    tags: Joi.string(),
   };
   return Joi.validate(cafe, schema);
 };

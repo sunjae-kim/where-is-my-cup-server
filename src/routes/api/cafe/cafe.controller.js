@@ -20,7 +20,7 @@ exports.getDetail = async (req, res) => {
     return res.status(200).send(cafe);
   } catch (error) {
     logger.error(error.message);
-    logger.error(`At '/detail/:id' : body: ${req.body}`);
+    logger.error(`At '/detail/:id' : headers: ${req.headers}`);
     return res.status(400).send(error.message);
   }
 };
@@ -35,7 +35,7 @@ exports.getTagsForCafe = async (req, res) => {
     return res.status(200).send(tags);
   } catch (error) {
     logger.error(error.message);
-    logger.error(`At '/tags/:id' : body: ${req.body}`);
+    logger.error(`At '/tags/:id' : params: ${req.params}`);
     return res.status(400).send(error.message);
   }
 };
@@ -73,7 +73,7 @@ exports.curLoc = async (req, res) => {
     res.status(200).send(cafeList);
   } catch (error) {
     logger.error(error.message);
-    logger.error(`At '/curLoc' : body: ${req.body}`);
+    logger.error(`At '/curLoc' : headers: ${req.headers}`);
     res.status(400).send(error.message);
   }
 };
@@ -102,7 +102,7 @@ exports.search = async (req, res) => {
     res.status(200).send(newCafeList);
   } catch (error) {
     logger.error(error.message);
-    logger.error(`At '/search' : body: ${req.body}`);
+    logger.error(`At '/search/:query' : headers: ${req.headers}`);
     res.status(400).send(error.message);
   }
 };
@@ -139,7 +139,7 @@ exports.feedback = async (req, res) => {
     return res.status(201).send(result);
   } catch (error) {
     logger.error(error.message);
-    logger.error(`At '/feedback' : body: ${req.body}`);
+    logger.error(`At '/feedback/:cafeId' : body: ${req.body}; params: ${req.params}`);
     return res.status(400).send(error.message);
   }
 };
