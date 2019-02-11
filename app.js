@@ -4,10 +4,10 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-
-const logger = require('./src/lib').getLogger('Server');
 const { database } = require('./config');
+const { utility: { getLogger } } = require('./src/lib');
 
+const logger = getLogger('Server');
 const app = express();
 app.use(helmet());
 app.use(morgan('dev'));

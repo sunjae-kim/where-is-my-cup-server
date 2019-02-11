@@ -1,6 +1,6 @@
 const route = require('express').Router();
 const oauthController = require('./oauth.controller');
-const { encrptPassword, checkToken } = require('../../lib');
+const { middlewares: { encrptPassword, checkToken } } = require('../../lib');
 
 const checkRefreshToken = checkToken('x-refresh-token');
 

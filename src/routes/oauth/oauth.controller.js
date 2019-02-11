@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 
 const { User, validateUser } = require('../../model/user');
-const { signAccessToken, signRefreshToken } = require('../../lib');
+const { utility: { signAccessToken, signRefreshToken } } = require('../../lib');
 
 // POST /oauth/login
 exports.login = async (req, res) => {

@@ -1,5 +1,5 @@
 const { models: { Cafe, Tag }, validateMethods: { validateTag } } = require('../../../model');
-const { getDistance, getLogger } = require('../../../lib');
+const { utility: { getDistance, getLogger } } = require('../../../lib');
 
 const logger = getLogger('api/cafe');
 const LAT_DISTANCE = 0.0018; // 약 200m

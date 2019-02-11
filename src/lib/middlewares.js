@@ -34,6 +34,18 @@ exports.checkToken = token => async (req, res, next) => {
 };
 
 /**
+ * @middleware
+ * 현재 위치에서 카페 까지의 거리를 계산하는 route 에서 사용된다.
+ * `headers` 에서 넘어오는 `latitude` 와 `longitude` 를 number type 으로 변환한다.
+ */
+exports.headerParser = (req, res, next) => {
+  const { latitude, longitude } = req.headers;
+  req.headers.latitude = Number(latitude);
+  req.headers.longitude = Number(longitude);
+  next();
+};
+
+/**
  *  @middleware
  *  `bcrypt` 모듈로 암호화를 진행한다. `saltRound` 는 10회 적용된다.
  *  비밀번호가 입력되지 않을 시 `403` status code 로 오류메세지를 응답한다.
