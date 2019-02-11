@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const { User, validateUser } = require('../../model/user');
 const { signAccessToken, signRefreshToken } = require('../../lib');
 
+// POST /oauth/login
 exports.login = async (req, res) => {
   // 사용자가 입력한 이메일이 데이터베이스에 존재하는지 확인한다.
   const { email, password } = req.body;
@@ -26,6 +27,7 @@ exports.login = async (req, res) => {
   return res.status(200).send({ userExist });
 };
 
+// POST /oauth/register
 exports.register = async (req, res) => {
   // 사용자의 인풋이 스키마에 부합하는지 확인한다.
   let user = req.body;
@@ -55,6 +57,7 @@ exports.register = async (req, res) => {
   return res.status(201).send({ user });
 };
 
+// GET /oauth/access
 exports.access = async (req, res) => {
   // 사용자가 보낸 토큰에서 payload 를 꺼낸다.
   const { tokenPayload: { email, _id, name } } = req;

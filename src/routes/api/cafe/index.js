@@ -7,9 +7,9 @@ const checkAccessToken = checkToken('x-access-token');
 route.get('/detail/:id', checkAccessToken, controller.getDetail);
 route.post('/detail', checkAccessToken, controller.postDetail);
 
-route.get('/curLoc/:latitude/:longitude', controller.curLoc);
+route.post('/curLoc', controller.curLoc);
 
-route.get('/search/:query', controller.search);
+route.post('/search', controller.search);
 
 route.post('/feedback', controller.feedback);
 
