@@ -107,7 +107,7 @@ exports.search = async (req, res) => {
   }
 };
 
-// POST /api/cafe/feedback/:cafeId
+// POST /api/cafe/feedback/:id
 exports.feedback = async (req, res) => {
   try {
     // 올바른 태그들이 입력됐는지 확인한다.
@@ -117,8 +117,8 @@ exports.feedback = async (req, res) => {
     if (error) return res.status(400).send('입력하신 태그가 스키마에 부합하지 않습니다.');
 
     // 카페의 태그를 확인한다.
-    const { tagId } = await Cafe.findById(cafeId);
-    const tags = await Tag.findById(tagId);
+    const { tags: tagsId } = await Cafe.findById(cafeId).select('tags');
+    const tags = await Tag.findById(tagsId);
 
     // 카페 태그에 사용자 피드백을 반영한다.
     let result;
@@ -126,7 +126,7 @@ exports.feedback = async (req, res) => {
       // 카페에 대한 태그가 없을 경우 새로 생성한다.
       result = await Tag.create(value);
       const { _id: newTagId } = result;
-      await Cafe.findOneAndUpdate({ _id: cafeId }, { tagId: newTagId });
+      await Cafe.findOneAndUpdate({ _id: cafeId }, { tags: newTagId });
     } else {
       // 있을 경우 해당 태그에 반영한다.
       const newTags = Object.entries(value).reduce((acc, tag) => {
@@ -134,7 +134,7 @@ exports.feedback = async (req, res) => {
         acc[tagName] += 1;
         return acc;
       }, tags);
-      result = await Tag.findOneAndUpdate({ _id: tagId }, newTags, { new: true });
+      result = await Tag.findOneAndUpdate({ _id: tagsId }, newTags, { new: true });
     }
     return res.status(201).send(result);
   } catch (error) {
