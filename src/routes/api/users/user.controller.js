@@ -1,7 +1,7 @@
-const { Users } = require('../../../model/user');
+const { User } = require('../../../model/user');
 
 // GET /api/users/list
 exports.getList = async (req, res) => {
-  const allUsers = await Users.find();
+  const allUsers = await User.find();
   res.send(allUsers);
 };

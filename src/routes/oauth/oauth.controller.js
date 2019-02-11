@@ -1,12 +1,12 @@
 const bcrypt = require('bcrypt');
 
-const { Users, validateUser } = require('../../model/user');
+const { User, validateUser } = require('../../model/user');
 const { signAccessToken, signRefreshToken } = require('../../lib');
 
 exports.login = async (req, res) => {
   // 사용자가 입력한 이메일이 데이터베이스에 존재하는지 확인한다.
   const { email, password } = req.body;
-  const userExist = await Users.findOne({ email, oauth: 'local' });
+  const userExist = await User.findOne({ email, oauth: 'local' });
   if (!userExist) return res.status(400).send('존재하지 않는 이메일입니다.');
 
   // 사용자가 입력한 패스워드가 일치하는지 확인한다.
@@ -35,13 +35,13 @@ exports.register = async (req, res) => {
   // 사용자의 이메일을 중복 확인한다.
   {
     const { email } = req.body;
-    const userExist = await Users.findOneByEmail(email);
+    const userExist = await User.findOneByEmail(email);
     if (userExist) return res.status(400).send('이미 존재하는 이메일입니다.');
     user = { ...value, oauth: 'local' };
   }
 
   // 데이터 베이스에 사용자 정보를 등록한다.
-  user = await Users.create(user);
+  user = await User.create(user);
 
   // 토큰을 발행한다.
   const { _id, email, name } = user;

@@ -37,8 +37,8 @@ const validateUser = (user) => {
   return Joi.validate(user, schema);
 };
 
-const Users = model('Users', usersSchema);
+const User = model('Users', usersSchema);
 
 module.exports = {
-  usersSchema, validateUser, Users,
+  usersSchema, validateUser, User,
 };

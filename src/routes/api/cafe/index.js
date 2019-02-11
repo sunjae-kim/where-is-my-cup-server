@@ -4,11 +4,13 @@ const { checkToken } = require('../../../lib');
 
 const checkAccessToken = checkToken('x-access-token');
 
-// detail
 route.get('/detail/:id', checkAccessToken, controller.getDetail);
 route.post('/detail', checkAccessToken, controller.postDetail);
 
-// list
-route.get('/list/:query', checkAccessToken, controller.getList);
+route.get('/curLoc/:latitude/:longitude', controller.curLoc);
+
+route.get('/search/:query', controller.search);
+
+route.post('/feedback', controller.feedback);
 
 module.exports = route;

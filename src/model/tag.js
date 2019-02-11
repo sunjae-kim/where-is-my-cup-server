@@ -15,7 +15,7 @@ const tagSchema = new Schema({
   dessertSimple: { type: Number, default: 0 },
 });
 
-const validateCafe = (tag) => {
+const validateTag = (tag) => {
   const schema = {
     spaceL: Joi.number(),
     spaceM: Joi.number(),
@@ -32,8 +32,8 @@ const validateCafe = (tag) => {
   return Joi.validate(tag, schema);
 };
 
-const Tags = model('Tag', tagSchema);
+const Tag = model('Tag', tagSchema);
 
 module.exports = {
-  tagSchema, validateCafe, Tags,
+  tagSchema, validateTag, Tag,
 };

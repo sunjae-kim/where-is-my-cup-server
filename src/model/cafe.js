@@ -29,12 +29,11 @@ const validateCafe = (cafe) => {
     homepage: Joi.string(),
     convenience: Joi.string(),
     description: Joi.string(),
-    tagid: Joi.string(),
   };
   return Joi.validate(cafe, schema);
 };
 
-const Cafe = model('Cafe', cafeSchema);
+const Cafe = model('Cafes', cafeSchema);
 
 module.exports = {
   cafeSchema, validateCafe, Cafe,

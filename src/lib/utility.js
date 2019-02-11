@@ -12,7 +12,7 @@ const signToken = util.promisify(jwt.sign);
  */
 exports.signAccessToken = (userInfo, secret) => {
   const tokenOption = {
-    expiresIn: '2h',
+    expiresIn: '3h',
     issuer: 'where-is-my-cup',
     subject: 'accessToken',
   };
