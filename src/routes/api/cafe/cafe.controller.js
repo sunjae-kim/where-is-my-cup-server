@@ -10,12 +10,32 @@ exports.getDetail = async (req, res) => {
   try {
     // Id 에 일치하는 카페를 검색한다.
     const { id } = req.params;
+    const { latitude, longitude } = req.headers;
     const cafe = await Cafe.findById(id).populate('tags');
     if (!cafe) return res.status(400).send('해당 카페가 존재하지 않습니다.');
+
+    // 카페의 거리를 추가 검색하여 응답한다.
+    const { _doc: newCafe, location: { lat, lng } } = cafe;
+    newCafe.distance = Math.floor(getDistance(latitude, longitude, lat, lng) * 1000);
     return res.status(200).send(cafe);
   } catch (error) {
     logger.error(error.message);
-    logger.error(`At '/feedback' : body: ${req.body}`);
+    logger.error(`At '/detail/:id' : body: ${req.body}`);
+    return res.status(400).send(error.message);
+  }
+};
+
+// GET /api/cafe/tags/:id
+exports.getTagsForCafe = async (req, res) => {
+  try {
+    // Id 에 일치하는 태그를 검색한다.
+    const { id } = req.params;
+    const tags = await Tag.findById(id);
+    if (!tags) return res.status(400).send('아직 평가가 되지 않은 카페입니다.');
+    return res.status(200).send(tags);
+  } catch (error) {
+    logger.error(error.message);
+    logger.error(`At '/tags/:id' : body: ${req.body}`);
     return res.status(400).send(error.message);
   }
 };
@@ -25,11 +45,11 @@ exports.postDetail = (req, res) => {
   res.status(201).send(req.body);
 };
 
-// POST /api/cafe/curLoc
+// GET /api/cafe/curLoc
 exports.curLoc = async (req, res) => {
   try {
     // 카페검색 bounds 를 지정한다.
-    const { latitude, longitude } = req.body;
+    const { latitude, longitude } = req.headers;
     const sLat = latitude - LAT_DISTANCE;
     const sLng = longitude - LNG_DISTANCE;
     const eLat = latitude + LAT_DISTANCE;
@@ -53,16 +73,17 @@ exports.curLoc = async (req, res) => {
     res.status(200).send(cafeList);
   } catch (error) {
     logger.error(error.message);
-    logger.error(`At '/feedback' : body: ${req.body}`);
+    logger.error(`At '/curLoc' : body: ${req.body}`);
     res.status(400).send(error.message);
   }
 };
 
-// POST /api/cafe/search
+// GET /api/cafe/search/:query
 exports.search = async (req, res) => {
   try {
     // 사용자 query 로 카페를 검색한다.
-    const { latitude, longitude, query } = req.body;
+    const { query } = req.params;
+    const { latitude, longitude } = req.headers;
     const cafeList = await Cafe.find({
       $or: [
         { title: { $regex: query, $options: 'i' } },
@@ -81,16 +102,17 @@ exports.search = async (req, res) => {
     res.status(200).send(newCafeList);
   } catch (error) {
     logger.error(error.message);
-    logger.error(`At '/feedback' : body: ${req.body}`);
+    logger.error(`At '/search' : body: ${req.body}`);
     res.status(400).send(error.message);
   }
 };
 
-// POST /api/cafe/feedback
+// POST /api/cafe/feedback/:cafeId
 exports.feedback = async (req, res) => {
   try {
     // 올바른 태그들이 입력됐는지 확인한다.
-    const { cafeId, feedback } = req.body;
+    const { id: cafeId } = req.params;
+    const { feedback } = req.body;
     const { value, error } = validateTag(feedback);
     if (error) return res.status(400).send('입력하신 태그가 스키마에 부합하지 않습니다.');
 

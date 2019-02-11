@@ -7,10 +7,12 @@ const checkAccessToken = checkToken('x-access-token');
 route.get('/detail/:id', checkAccessToken, controller.getDetail);
 route.post('/detail', checkAccessToken, controller.postDetail);
 
-route.post('/curLoc', controller.curLoc);
+route.get('/tags/:id', checkAccessToken, controller.getTagsForCafe);
 
-route.post('/search', controller.search);
+route.get('/curLoc', checkAccessToken, controller.curLoc);
 
-route.post('/feedback', controller.feedback);
+route.get('/search/:query', checkAccessToken, controller.search);
+
+route.post('/feedback/:id', checkAccessToken, controller.feedback);
 
 module.exports = route;

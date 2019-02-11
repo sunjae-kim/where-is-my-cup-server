@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const util = require('util');
+const log4js = require('log4js');
+log4js.configure(require('../../config').log4js);
 
 const signToken = util.promisify(jwt.sign);
 
@@ -7,8 +9,8 @@ const signToken = util.promisify(jwt.sign);
  *  @function
  *  3 시간의 수명을 가지는 `accessToken` 을 발행하는 함수
  *  사용자 인증이 필요한 자원에 접근할 때 사용된다.
- *  @param userInfo 토큰 payload 에 실을 최소한의 정보만 담는 객체
- *  @param secret 토큰 서명 시 사용되는 비밀 키
+ *  @param {object} userInfo 토큰 payload 에 실을 최소한의 정보만 담는 객체
+ *  @param {stirng} secret 토큰 서명 시 사용되는 비밀 키
  */
 exports.signAccessToken = (userInfo, secret) => {
   const tokenOption = {
@@ -23,8 +25,8 @@ exports.signAccessToken = (userInfo, secret) => {
  *  @function
  *  14 일의 수명을 가지는 `refreshToken` 을 발행하는 함수
  *  `accessToken` 을 재발행 할 때 사용된다.
- *  @param userInfo 토큰 payload 에 실을 최소한의 정보만 담는 객체
- *  @param secret 토큰 서명 시 사용되는 비밀 키
+ *  @param {object} userInfo 토큰 payload 에 실을 최소한의 정보만 담는 객체
+ *  @param {string} secret 토큰 서명 시 사용되는 비밀 키
  */
 exports.signRefreshToken = (userInfo, secret) => {
   const tokenOption = {
@@ -35,11 +37,21 @@ exports.signRefreshToken = (userInfo, secret) => {
   return signToken(userInfo, secret, tokenOption);
 };
 
-const log4js = require('log4js');
-log4js.configure(require('../../config').log4js);
-
+/**
+ * @function
+ * 환경설정이 된 `log4js` 에서 로거를 생성하는 함수
+ * @param {string} logger 로거의 카테고리를 정의한다.
+ */
 exports.getLogger = logger => log4js.getLogger(logger);
 
+/**
+ * @function
+ * 두 곳의 위도경고 값을 받아서 위치를 `km` 단위로 반환해주는 함수
+ * @param {number} lat1
+ * @param {number} lng1
+ * @param {number} lat2
+ * @param {number} lng2
+ */
 exports.getDistance = (lat1, lng1, lat2, lng2) => {
   const deg2rad = deg => deg * (Math.PI / 180);
   const R = 6371; // Radius of the earth in km
