@@ -14,9 +14,18 @@ const config = {
         app: {
           type: 'stdout',
         },
+        errorFile: {
+          type: 'file',
+          filename: 'log/errors.log',
+        },
+        errors: {
+          type: 'logLevelFilter',
+          level: 'ERROR',
+          appender: 'errorFile',
+        },
       },
       categories: {
-        default: { appenders: ['app'], level: 'TRACE' },
+        default: { appenders: ['app', 'errors'], level: 'TRACE' },
       },
     },
   },
