@@ -1,4 +1,4 @@
-const { models: { Cafe, Tag }, validateMethods: { validateTag } } = require('../../../model');
+const { models: { Cafe, Tag, User }, validateMethods: { validateTag } } = require('../../../model');
 const { utility: { getDistance, getLogger } } = require('../../../lib');
 
 const logger = getLogger('api/cafe');
@@ -56,21 +56,46 @@ exports.curLoc = async (req, res) => {
     const eLng = longitude + LNG_DISTANCE;
 
     // Bounds 내의 카페를 검색한다.
-    let cafeList = await Cafe.find({
+    let cafeAround = await Cafe.find({
       'location.lat': { $gte: sLat, $lte: eLat },
       'location.lng': { $gte: sLng, $lte: eLng },
     });
 
     // 카페까지의 거리가 200m 이내인 카페로 추린다.
-    cafeList = cafeList.reduce((acc, cafe) => {
+    const cafeIdList = [];
+    cafeAround = cafeAround.reduce((acc, cafe) => {
       const { location: { lat, lng } } = cafe;
       const { _doc: newCafe } = cafe;
       const distance = Math.floor(getDistance(latitude, longitude, lat, lng) * 1000);
       newCafe.distance = distance;
-      if (distance <= 200) acc.push(newCafe);
+      if (distance <= 200) {
+        const { _id } = newCafe;
+        acc.push(newCafe);
+        cafeIdList.push(_id);
+      }
       return acc;
     }, []);
-    res.status(200).send(cafeList);
+    cafeAround.sort((a, b) => a.distance - b.distance);
+
+    // 주위 카페를 좋아하는 유저를 찾는다.
+    const users = await User.find({ favorites: { $in: cafeIdList } }).populate('favorites');
+
+    // FIXME 유저들 중 성향이 비슷한 neighbor 들을 찾는다.
+    const neighbors = users;
+
+    // TODO Neighbor 들과 비교하여 추천될만한 Tag 를 찾는다.
+
+    // TODO (Top 3 태그) + (추천된 태그) 로 추천할 카페를 찾는다.
+
+    // Neighbor 들이 좋아하는 200m 범위 내의 카페들을 찾는다.
+    const recommendations = neighbors.map(neighbor => ({
+      [neighbor.name]: neighbor.favorites.filter((favorite) => {
+        const { location: { lat, lng } } = favorite;
+        return getDistance(latitude, longitude, lat, lng) <= 0.2;
+      }),
+    }));
+
+    res.status(200).send({ cafeAround, recommendations });
   } catch (error) {
     logger.error(error.message);
     logger.error(`At '/curLoc' : headers: ${req.headers}`);
@@ -99,6 +124,7 @@ exports.search = async (req, res) => {
       acc.push(newCafe);
       return acc;
     }, []);
+    newCafeList.sort((a, b) => a.distance - b.distance);
     res.status(200).send(newCafeList);
   } catch (error) {
     logger.error(error.message);

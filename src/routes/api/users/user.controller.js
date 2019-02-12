@@ -30,7 +30,6 @@ exports.getFavorites = async (req, res) => {
 // POST /api/users/favorites/:id
 exports.postFavorites = async (req, res) => {
   try {
-    logger.trace('Get in');
     // Id 를 통해서 사용자 정보를 찾는다.
     const { id: _id } = req.params;
     const { cafeId } = req.body;
