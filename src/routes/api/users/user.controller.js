@@ -9,12 +9,12 @@ exports.getList = async (req, res) => {
   res.send(allUsers);
 };
 
-// GET /api/users/favorites/:id
+// GET /api/users/favorites/
 exports.getFavorites = async (req, res) => {
   try {
     // Id 를 통해서 사용자 정보를 찾는다.
-    const { id } = req.params;
-    const user = await User.findById(id).populate('favorites');
+    const { _id } = req.tokenPayload;
+    const user = await User.findById(_id).populate('favorites');
     if (!user) return res.status(400).send('존재하지 않는 유저입니다.');
 
     // 사용자의 즐겨찾기를 찾고 응답한다.
@@ -27,11 +27,11 @@ exports.getFavorites = async (req, res) => {
   }
 };
 
-// POST /api/users/favorites/:id
+// POST /api/users/favorites/
 exports.postFavorites = async (req, res) => {
   try {
     // Id 를 통해서 사용자 정보를 찾는다.
-    const { id: _id } = req.params;
+    const { _id } = req.tokenPayload;
     const { cafeId } = req.body;
     const user = await User.findById(_id).populate('Cafes');
     if (!user) return res.status(400).send('존재하지 않는 유저입니다.');

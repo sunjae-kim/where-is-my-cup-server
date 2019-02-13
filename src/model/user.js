@@ -1,15 +1,16 @@
 const { Schema, model } = require('mongoose');
 const Joi = require('joi');
 const { Cafe } = require('./cafe');
-const { Tag } = require('./tag');
+const { Tag, tagSchema } = require('./tag');
 
 const usersSchema = new Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   oauth: { type: String, enum: ['google', 'kakao', 'local'], required: true },
   createdAt: { type: Date, default: Date.now },
   tags: { type: Schema.Types.ObjectId, ref: Tag },
+  top3Tags: [{ type: String, enum: Object.keys(tagSchema.obj) }],
   favorites: [{ type: Schema.Types.ObjectId, ref: Cafe }],
 });
 
@@ -28,15 +29,20 @@ usersSchema.statics.create = async function createUser(user) {
   return newUser;
 };
 
+usersSchema.statics.setTop3 = function setTop3(id, tags) {
+  return this.findOneAndUpdate({ _id: id }, { top3Tags: tags }, { new: true });
+};
+
 const validateUser = (user) => {
   const schema = {
     name: Joi.string().required(),
-    email: Joi.string().required(),
+    email: Joi.string().email().required(),
     password: Joi.string().required(),
     oauth: Joi.string(),
     createdAt: Joi.date(),
     tags: Joi.string(),
     favorites: Joi.array(),
+    top3Tags: Joi.array(),
   };
   return Joi.validate(user, schema);
 };

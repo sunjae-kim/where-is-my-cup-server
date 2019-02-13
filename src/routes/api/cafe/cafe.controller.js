@@ -1,5 +1,6 @@
 const { models: { Cafe, Tag, User }, validateMethods: { validateTag } } = require('../../../model');
 const { utility: { getDistance, getLogger } } = require('../../../lib');
+const { cfWithUsers, cfWithCafelist } = require('../../../service/collaborativeFiltering');
 
 const logger = getLogger('api/cafe');
 const LAT_DISTANCE = 0.0018; // 약 200m
@@ -78,28 +79,37 @@ exports.curLoc = async (req, res) => {
     cafeAround.sort((a, b) => a.distance - b.distance);
 
     // 주위 카페를 좋아하는 유저를 찾는다.
-    const users = await User.find({ favorites: { $in: cafeIdList } }).populate('favorites');
+    const recommendations = [];
+    const { _id } = req.tokenPayload;
+    const users = await User.find({ favorites: { $in: cafeIdList }, _id: { $ne: _id } }).populate('favorites');
+    const user = await User.findById(_id);
 
-    // FIXME 유저들 중 성향이 비슷한 neighbor 들을 찾는다.
-    const neighbors = users;
+    // 유저들 중 성향이 비슷한 neighbor 및 추천될만한 Tag 를 찾는다.
+    const { neighbors, tag } = await cfWithUsers(users, user);
 
-    // TODO Neighbor 들과 비교하여 추천될만한 Tag 를 찾는다.
+    // (Top 3 태그) + (추천된 태그) 로 추천할 카페를 찾는다.
+    const { top3Tags } = user;
+    const tags = tag ? [...top3Tags, tag] : top3Tags;
+    const cafelistFromTags = await cfWithCafelist(user, tags, cafeAround);
+    if (cafelistFromTags) recommendations.push(cafelistFromTags);
 
-    // TODO (Top 3 태그) + (추천된 태그) 로 추천할 카페를 찾는다.
-
+    if (neighbors) {
     // Neighbor 들이 좋아하는 200m 범위 내의 카페들을 찾는다.
-    const recommendations = neighbors.map(neighbor => ({
-      [neighbor.name]: neighbor.favorites.filter((favorite) => {
-        const { location: { lat, lng } } = favorite;
-        return getDistance(latitude, longitude, lat, lng) <= 0.2;
-      }),
-    }));
+      const cafelistFromNeighbors = neighbors.map(neighbor => ({
+        [neighbor.name]: neighbor.favorites.filter((favorite) => {
+          const { location: { lat, lng } } = favorite;
+          return getDistance(latitude, longitude, lat, lng) <= 0.2;
+        }),
+      }));
+      recommendations.push(cafelistFromNeighbors);
+    }
 
-    res.status(200).send({ cafeAround, recommendations });
+    // res.status(200).send({ cafeAround, recommendations });
+    res.status(200).send(cafeAround);
   } catch (error) {
     logger.error(error.message);
     logger.error(`At '/curLoc' : headers: ${req.headers}`);
-    res.status(400).send(error.message);
+    res.status(400).send(error);
   }
 };
 
@@ -150,7 +160,8 @@ exports.feedback = async (req, res) => {
     let result;
     if (!tags) {
       // 카페에 대한 태그가 없을 경우 새로 생성한다.
-      result = await Tag.create(value);
+      const newTags = Object.keys(value).map(tag => ({ [tag]: 1 }));
+      result = await Tag.create(newTags);
       const { _id: newTagId } = result;
       await Cafe.findOneAndUpdate({ _id: cafeId }, { tags: newTagId });
     } else {

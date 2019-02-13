@@ -1,6 +1,6 @@
 const { Schema, model } = require('mongoose');
 const Joi = require('joi');
-const { Tag } = require('./tag');
+const { Tag, tagSchema } = require('./tag');
 
 const cafeSchema = new Schema({
   property: { type: Number, default: 0 },
@@ -15,6 +15,7 @@ const cafeSchema = new Schema({
   convenience: String,
   description: String,
   tags: { type: Schema.Types.ObjectId, ref: Tag },
+  top3Tags: [{ type: String, enum: Object.keys(tagSchema.obj) }],
 });
 
 const validateCafe = (cafe) => {
@@ -31,6 +32,7 @@ const validateCafe = (cafe) => {
     convenience: Joi.string(),
     description: Joi.string(),
     tags: Joi.string(),
+    top3Tags: Joi.array(),
   };
   return Joi.validate(cafe, schema);
 };

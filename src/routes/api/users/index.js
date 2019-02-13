@@ -6,7 +6,7 @@ const checkAccessToken = checkToken('x-access-token');
 
 route.get('/list', controller.getList);
 
-route.get('/favorites/:id', checkAccessToken, controller.getFavorites);
-route.post('/favorites/:id', checkAccessToken, controller.postFavorites);
+route.get('/favorites', checkAccessToken, controller.getFavorites);
+route.post('/favorites', checkAccessToken, controller.postFavorites);
 
 module.exports = route;

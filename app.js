@@ -39,6 +39,7 @@ mongoose.connect(
     pass: database.password,
     dbName: database.dbName,
     useNewUrlParser: true,
+    useCreateIndex: true,
   },
   (error) => {
     if (error) {
