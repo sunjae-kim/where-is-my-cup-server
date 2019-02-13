@@ -1,6 +1,6 @@
-const { models: { Cafe, Tag, User }, validateMethods: { validateTag } } = require('../../../model');
+const { models: { Cafe, Tag, User }, validateMethods: { validateTag }, schemas: { tagSchema } } = require('../../../model');
 const { utility: { getDistance, getLogger } } = require('../../../lib');
-const { cfWithUsers, cfWithCafelist } = require('../../../service/collaborativeFiltering');
+const { collaborativeFiltering: { cfWithUsers, cfWithCafelist } } = require('../../../service');
 
 const logger = getLogger('api/cafe');
 const LAT_DISTANCE = 0.0018; // 약 200m
@@ -57,34 +57,33 @@ exports.curLoc = async (req, res) => {
     const eLng = longitude + LNG_DISTANCE;
 
     // Bounds 내의 카페를 검색한다.
-    let cafeAround = await Cafe.find({
+    const cafeList = await Cafe.find({
       'location.lat': { $gte: sLat, $lte: eLat },
       'location.lng': { $gte: sLng, $lte: eLng },
     });
 
     // 카페까지의 거리가 200m 이내인 카페로 추린다.
-    const cafeIdList = [];
-    cafeAround = cafeAround.reduce((acc, cafe) => {
+    const [cafeAround, cafeIdList] = cafeList.reduce((acc, cafe) => {
       const { location: { lat, lng } } = cafe;
       const { _doc: newCafe } = cafe;
       const distance = Math.floor(getDistance(latitude, longitude, lat, lng) * 1000);
       newCafe.distance = distance;
       if (distance <= 200) {
         const { _id } = newCafe;
-        acc.push(newCafe);
-        cafeIdList.push(_id);
+        acc[0].push(newCafe);
+        acc[1].push(_id);
       }
       return acc;
-    }, []);
+    }, [[], []]);
     cafeAround.sort((a, b) => a.distance - b.distance);
 
     // 주위 카페를 좋아하는 유저를 찾는다.
     const recommendations = [];
     const { _id } = req.tokenPayload;
     const users = await User.find({ favorites: { $in: cafeIdList }, _id: { $ne: _id } }).populate('favorites');
-    const user = await User.findById(_id);
 
     // 유저들 중 성향이 비슷한 neighbor 및 추천될만한 Tag 를 찾는다.
+    const user = await User.findById(_id);
     const { neighbors, tag } = await cfWithUsers(users, user);
 
     // (Top 3 태그) + (추천된 태그) 로 추천할 카페를 찾는다.
@@ -93,8 +92,8 @@ exports.curLoc = async (req, res) => {
     const cafelistFromTags = await cfWithCafelist(user, tags, cafeAround);
     if (cafelistFromTags) recommendations.push(cafelistFromTags);
 
-    if (neighbors) {
     // Neighbor 들이 좋아하는 200m 범위 내의 카페들을 찾는다.
+    if (neighbors) {
       const cafelistFromNeighbors = neighbors.map(neighbor => ({
         [neighbor.name]: neighbor.favorites.filter((favorite) => {
           const { location: { lat, lng } } = favorite;
@@ -104,8 +103,8 @@ exports.curLoc = async (req, res) => {
       recommendations.push(cafelistFromNeighbors);
     }
 
-    // res.status(200).send({ cafeAround, recommendations });
-    res.status(200).send(cafeAround);
+    // TODO 추천할 카페가 없을 시 주위 카페 중 랜덤으로 보내기
+    res.status(200).send({ cafeAround, recommendations });
   } catch (error) {
     logger.error(error.message);
     logger.error(`At '/curLoc' : headers: ${req.headers}`);
@@ -143,37 +142,69 @@ exports.search = async (req, res) => {
   }
 };
 
+// 태그를 받아서 TOP 3 를 계산하는 함수
+const getTop3 = (tags) => {
+  const { _doc } = tags;
+  const schema = Object.keys(tagSchema.obj);
+  const sortedTags = Object.entries(_doc)
+    .filter(tag => (schema.includes(tag[0]) && tag[1] > 0))
+    .sort((a, b) => b[1] - a[1]);
+  return sortedTags.reduce((acc, tag) => {
+    if (acc.length === 0) return [tag];
+    if (acc.length < 3 || acc[acc.length - 1][1] === tag[1]) {
+      acc.push(tag);
+    }
+    return acc;
+  }, []).map(tag => tag[0]);
+};
+
+// 피드백을 반영하는 함수
+const applyFeedback = async (id, value, Model) => {
+  // 유저의 태그를 확인한다.
+  const { tags: tagsId } = await Model.findById(id).select('tags');
+  const tags = await Tag.findById(tagsId);
+
+  // 카페 태그에 사용자 피드백을 반영한다.
+  let result;
+  if (!tags) {
+    // 카페에 대한 태그가 없을 경우 새로 생성한다.
+    const newTags = Object.keys(value).reduce((acc, tag) => {
+      acc[tag] = 1;
+      return acc;
+    }, {});
+    result = await Tag.create(newTags);
+    const top3Tags = getTop3(result);
+    const { _id: newTagId } = result;
+    await Model.findOneAndUpdate({ _id: id }, { tags: newTagId, top3Tags });
+  } else {
+    // 있을 경우 해당 태그에 반영한다.
+    const newTags = Object.entries(value).reduce((acc, tag) => {
+      const [tagName] = tag;
+      acc[tagName] += 1;
+      return acc;
+    }, tags);
+    const top3Tags = getTop3(newTags);
+    await Model.findOneAndUpdate({ _id: id }, { top3Tags });
+    result = await Tag.findOneAndUpdate({ _id: tagsId }, newTags, { new: true });
+  }
+
+  return result;
+};
+
 // POST /api/cafe/feedback/:id
 exports.feedback = async (req, res) => {
   try {
     // 올바른 태그들이 입력됐는지 확인한다.
     const { id: cafeId } = req.params;
     const { feedback } = req.body;
+    const { _id: userId } = req.tokenPayload;
     const { value, error } = validateTag(feedback);
     if (error) return res.status(400).send('입력하신 태그가 스키마에 부합하지 않습니다.');
 
-    // 카페의 태그를 확인한다.
-    const { tags: tagsId } = await Cafe.findById(cafeId).select('tags');
-    const tags = await Tag.findById(tagsId);
+    const userResult = await applyFeedback(userId, value, User);
+    const cafeResult = await applyFeedback(cafeId, value, Cafe);
 
-    // 카페 태그에 사용자 피드백을 반영한다.
-    let result;
-    if (!tags) {
-      // 카페에 대한 태그가 없을 경우 새로 생성한다.
-      const newTags = Object.keys(value).map(tag => ({ [tag]: 1 }));
-      result = await Tag.create(newTags);
-      const { _id: newTagId } = result;
-      await Cafe.findOneAndUpdate({ _id: cafeId }, { tags: newTagId });
-    } else {
-      // 있을 경우 해당 태그에 반영한다.
-      const newTags = Object.entries(value).reduce((acc, tag) => {
-        const [tagName] = tag;
-        acc[tagName] += 1;
-        return acc;
-      }, tags);
-      result = await Tag.findOneAndUpdate({ _id: tagsId }, newTags, { new: true });
-    }
-    return res.status(201).send(result);
+    return res.status(201).send({ userResult, cafeResult });
   } catch (error) {
     logger.error(error.message);
     logger.error(`At '/feedback/:cafeId' : body: ${req.body}; params: ${req.params}`);
