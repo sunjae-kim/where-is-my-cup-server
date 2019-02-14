@@ -1,5 +1,5 @@
 const { models: { Cafe, Tag, User }, validateMethods: { validateTag }, schemas: { tagSchema } } = require('../../../model');
-const { utility: { getDistance, getLogger } } = require('../../../lib');
+const { utility: { getDistance, getLogger, getRandom } } = require('../../../lib');
 const { collaborativeFiltering: { cfWithUsers, cfWithCafelist } } = require('../../../service');
 
 const logger = getLogger('api/cafe');
@@ -78,7 +78,6 @@ exports.curLoc = async (req, res) => {
     cafeAround.sort((a, b) => a.distance - b.distance);
 
     // 주위 카페를 좋아하는 유저를 찾는다.
-    const recommendations = [];
     const { _id } = req.tokenPayload;
     const users = await User.find({ favorites: { $in: cafeIdList }, _id: { $ne: _id } }).populate('favorites');
 
@@ -87,23 +86,35 @@ exports.curLoc = async (req, res) => {
     const { neighbors, tag } = await cfWithUsers(users, user);
 
     // (Top 3 태그) + (추천된 태그) 로 추천할 카페를 찾는다.
+    const recommendations = [];
     const { top3Tags } = user;
     const tags = tag ? [...top3Tags, tag] : top3Tags;
-    const cafelistFromTags = await cfWithCafelist(user, tags, cafeAround);
-    if (cafelistFromTags) recommendations.push(cafelistFromTags);
+    const cafeIdListRecommendedByTag = await cfWithCafelist(user, tags, cafeAround);
+
+    if (cafeIdListRecommendedByTag) {
+      cafeAround.forEach((cafe) => {
+        const { _id: cafeId } = cafe;
+        if (cafeIdListRecommendedByTag.includes(cafeId)) recommendations.push(cafe);
+      });
+    }
 
     // Neighbor 들이 좋아하는 200m 범위 내의 카페들을 찾는다.
     if (neighbors) {
-      const cafelistFromNeighbors = neighbors.map(neighbor => ({
-        [neighbor.name]: neighbor.favorites.filter((favorite) => {
+      neighbors.map(neighbor => ({
+        [neighbor.name]: neighbor.favorites.forEach((favorite) => {
           const { location: { lat, lng } } = favorite;
-          return getDistance(latitude, longitude, lat, lng) <= 0.2;
+          if (getDistance(latitude, longitude, lat, lng) <= 0.2) {
+            recommendations.push(favorite);
+          }
         }),
       }));
-      recommendations.push(cafelistFromNeighbors);
     }
 
     // TODO 추천할 카페가 없을 시 주위 카페 중 랜덤으로 보내기
+    if (recommendations.length === 0) {
+      recommendations.push(...getRandom(cafeAround));
+    }
+
     res.status(200).send({ cafeAround, recommendations });
   } catch (error) {
     logger.error(error.message);

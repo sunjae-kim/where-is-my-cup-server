@@ -13,6 +13,7 @@ const tagSchema = new Schema({
   nonCaffeine: { type: Number, default: 0 },
   calmMusic: { type: Number, default: 0 },
   hipMusic: { type: Number, default: 0 },
+  photoZong: { type: Number, default: 0 },
 });
 
 const validateTag = (tag) => {
@@ -28,6 +29,7 @@ const validateTag = (tag) => {
     nonCaffeine: Joi.boolean(),
     calmMusic: Joi.boolean(),
     hipMusic: Joi.boolean(),
+    photoZone: Joi.boolean(),
   };
   return Joi.validate(tag, schema);
 };

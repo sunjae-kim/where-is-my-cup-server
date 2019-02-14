@@ -64,3 +64,17 @@ exports.getDistance = (lat1, lng1, lat2, lng2) => {
   const d = R * c; // Distance in km
   return d;
 };
+
+exports.getRandom = (arr) => {
+  let len = arr.length;
+  let n = len > 5 ? 5 : len;
+  const result = [];
+  const taken = [];
+  while (n) {
+    n -= 1; len -= 1;
+    const x = Math.floor(Math.random() * len);
+    result[n] = arr[x in taken ? taken[x] : x];
+    taken[x] = len in taken ? taken[len] : len;
+  }
+  return result;
+};
