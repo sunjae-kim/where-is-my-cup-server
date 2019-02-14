@@ -36,10 +36,12 @@ exports.postFavorites = async (req, res) => {
     const user = await User.findById(_id).populate('Cafes');
     if (!user) return res.status(400).send('존재하지 않는 유저입니다.');
 
-    logger.debug(user);
-
-    // 사용자의 즐겨찾기에 추가한다.
+    // 사용자의 즐겨찾기에 이미 추가된 항목인지 확인한다.
     const { favorites } = user;
+    const flag = favorites.some(favorite => favorite.toString() === cafeId);
+    if (flag) return res.send(`Already saved : ${cafeId}`);
+
+    // 추가돼있지 않다면 로직을 수행한다.
     const result = await User.findOneAndUpdate(
       { _id },
       { $set: { favorites: [...favorites, cafeId] } },

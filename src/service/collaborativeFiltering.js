@@ -5,7 +5,8 @@ const ger = new g.GER(esm);
 
 const cfWithUsers = async (users, targetUser) => {
   // 추천 알고리즘을 위한 액션을 구한다.
-  const events = [...users, targetUser].flatMap((user) => {
+  const targetUsers = [...users, targetUser];
+  const events = targetUsers.flatMap((user) => {
     const { _id, top3Tags } = user;
     return top3Tags.map(tag => ({
       namespace: 'user',
@@ -36,7 +37,7 @@ const cfWithUsers = async (users, targetUser) => {
   const [item] = recommendations
     .filter(recommendation => !top3Tags.includes(recommendation.thing))
     .sort((a, b) => b.weight - a.weight);
-  const tag = item.thing;
+  const tag = item ? item.thing : null;
 
   return { neighborsIdList, tag };
 };
