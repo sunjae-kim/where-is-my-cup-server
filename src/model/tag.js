@@ -13,7 +13,7 @@ const tagSchema = new Schema({
   nonCaffeine: { type: Number, default: 0 },
   calmMusic: { type: Number, default: 0 },
   hipMusic: { type: Number, default: 0 },
-  photoZong: { type: Number, default: 0 },
+  photoZone: { type: Number, default: 0 },
 });
 
 const validateTag = (tag) => {
