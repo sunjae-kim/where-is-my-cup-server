@@ -1,6 +1,6 @@
 const { models: { Cafe, Tag, User }, validateMethods: { validateTag }, schemas: { tagSchema } } = require('../../../model');
 const { utility: { getDistance, getLogger, getRandom } } = require('../../../lib');
-const { collaborativeFiltering: { cfWithUsers, cfWithCafelist } } = require('../../../service');
+const { collaborativeFiltering: { cfWithUsers, cfWithCafelist }, googleMap: { getLatLng } } = require('../../../service');
 
 const logger = getLogger('api/cafe');
 const LAT_DISTANCE = 0.0018; // 약 200m
@@ -50,7 +50,13 @@ exports.postDetail = (req, res) => {
 exports.curLoc = async (req, res) => {
   try {
     // 카페검색 bounds 를 지정한다.
-    const { latitude, longitude } = req.headers;
+    const { address } = req.headers;
+    let { latitude, longitude } = req.headers;
+    if (address) {
+      const { lat, lng } = await getLatLng(address);
+      latitude = lat; longitude = lng;
+    }
+
     const sLat = latitude - LAT_DISTANCE;
     const sLng = longitude - LNG_DISTANCE;
     const eLat = latitude + LAT_DISTANCE;
