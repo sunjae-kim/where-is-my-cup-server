@@ -4,6 +4,8 @@ const { middlewares: { checkToken } } = require('../../../lib');
 
 const checkAccessToken = checkToken('x-access-token');
 
+route.delete('/', checkAccessToken, controller.deleteUser);
+
 route.get('/list', controller.getList);
 
 route.get('/favorites', checkAccessToken, controller.getFavorites);

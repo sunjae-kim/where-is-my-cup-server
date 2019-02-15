@@ -1,7 +1,15 @@
+const { Types: { ObjectId } } = require('mongoose');
 const { models: { User } } = require('../../../model');
 const { utility: { getLogger } } = require('../../../lib');
 
 const logger = getLogger('api/users');
+
+// DELETE /api/users/
+exports.deleteUser = async (req, res) => {
+  const { _id } = req.tokenPayload;
+  const result = await User.findByIdAndRemove(ObjectId(_id));
+  res.status(200).send(result);
+};
 
 // GET /api/users/list
 exports.getList = async (req, res) => {
