@@ -1,5 +1,4 @@
 const bcrypt = require('bcrypt');
-const { Types: { ObjectId } } = require('mongoose');
 
 const { User, validateUser } = require('../../model/user');
 const { utility: { signAccessToken, signRefreshToken } } = require('../../lib');
@@ -62,7 +61,7 @@ exports.register = async (req, res) => {
 exports.access = async (req, res) => {
   // 사용자가 보낸 토큰에서 payload 를 꺼낸다.
   const { tokenPayload: { email, name } } = req;
-  let { tokenPayload: { _id } } = req; _id = ObjectId(_id);
+  const { tokenPayload: { _id } } = req;
 
   // 사용자에게 보낼 사용자 정보를 꺼낸다.
   const user = await User.findById(_id);

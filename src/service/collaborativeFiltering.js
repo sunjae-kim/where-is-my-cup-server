@@ -1,4 +1,3 @@
-const { Types: { ObjectId } } = require('mongoose');
 const g = require('ger');
 
 const esm = new g.MemESM();
@@ -31,7 +30,7 @@ const cfWithUsers = async (users, targetUser) => {
     neighborsIdList = Object.entries(neighbourhood)
     // 타겟 본인 및 연관성이 0.5 미만인 유저들은 포함하지 않는다.
       .filter(user => user[1] < 1 && user[1] >= 0.5)
-      .map(user => ObjectId(user[0]));
+      .map(user => user[0]);
   }
 
   // 추천되는 태그를 구한다.
@@ -70,7 +69,7 @@ const cfWithCafelist = async ({ _id: userId }, tags, cafeAround) => {
       .sort((a, b) => b[1] - a[1])
     // 타겟 본인 및 연관성이 0.5 미만인 유저들은 포함하지 않는다.
       .filter(user => (user[1] < 1) && (user[1] >= 0.5))
-      .map(cafe => ObjectId(cafe[0]));
+      .map(cafe => cafe[0]);
   }
   return recommendedCafeList;
 };
