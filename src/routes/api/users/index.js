@@ -1,14 +1,12 @@
 const route = require('express').Router();
 const controller = require('./user.controller');
-const { middlewares: { checkToken } } = require('../../../lib');
 
-const checkAccessToken = checkToken('x-access-token');
-
-route.delete('/', checkAccessToken, controller.deleteUser);
+route.delete('/', controller.deleteUser);
 
 route.get('/list', controller.getList);
 
-route.get('/favorites', checkAccessToken, controller.getFavorites);
-route.post('/favorites', checkAccessToken, controller.postFavorites);
+route.get('/favorites', controller.getFavorites);
+route.post('/favorites', controller.postFavorites);
+route.delete('/favorites', controller.deleteFavorites);
 
 module.exports = route;

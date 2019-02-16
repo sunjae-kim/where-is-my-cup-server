@@ -1,3 +1,4 @@
+const { Types: { ObjectId } } = require('mongoose');
 const { models: { Cafe, Tag, User }, validateMethods: { validateTag }, schemas: { tagSchema } } = require('../../../model');
 const { utility: { getDistance, getLogger, getRandom } } = require('../../../lib');
 const { collaborativeFiltering: { cfWithUsers, cfWithCafelist }, googleMap: { getLatLng } } = require('../../../service');
@@ -10,7 +11,7 @@ const LNG_DISTANCE = 0.00227; // 약 200m
 exports.getDetail = async (req, res) => {
   try {
     // Id 에 일치하는 카페를 검색한다.
-    const { id } = req.params;
+    let { id } = req.params; id = ObjectId(id);
     const { latitude, longitude } = req.headers;
     const cafe = await Cafe.findById(id).populate('tags');
     if (!cafe) return res.status(400).send('해당 카페가 존재하지 않습니다.');
@@ -30,7 +31,7 @@ exports.getDetail = async (req, res) => {
 exports.getTagsForCafe = async (req, res) => {
   try {
     // Id 에 일치하는 태그를 검색한다.
-    const { id } = req.params;
+    let { id } = req.params; id = ObjectId(id);
     const tags = await Tag.findById(id);
     if (!tags) return res.status(400).send('아직 평가가 되지 않은 카페입니다.');
     return res.status(200).send(tags);
@@ -41,13 +42,9 @@ exports.getTagsForCafe = async (req, res) => {
   }
 };
 
-// POST /api/cafe/detail
-exports.postDetail = (req, res) => {
-  res.status(201).send(req.body);
-};
-
 // GET /api/cafe/curLoc
 exports.curLoc = async (req, res) => {
+  console.log(req.originalUrl);
   try {
     // 카페검색 bounds 를 지정한다.
     const { address } = req.headers;
@@ -84,7 +81,7 @@ exports.curLoc = async (req, res) => {
     cafeAround.sort((a, b) => a.distance - b.distance);
 
     // 주위 카페를 좋아하는 유저를 찾는다.
-    const { _id } = req.tokenPayload;
+    let { _id } = req.tokenPayload; _id = ObjectId(_id);
     const users = await User.find({ favorites: { $in: cafeIdList }, _id: { $ne: _id } }).populate('favorites');
 
     // 유저들 중 성향이 비슷한 neighbor 및 추천될만한 Tag 를 찾는다.
@@ -99,7 +96,7 @@ exports.curLoc = async (req, res) => {
     if (cafeIdListRecommendedByTag) {
       cafeAround.forEach((cafe) => {
         const { _id: cafeId } = cafe;
-        if (cafeIdListRecommendedByTag.includes(cafeId.toString())) recommendations.push(cafe);
+        if (cafeIdListRecommendedByTag.includes(cafeId)) recommendations.push(cafe);
       });
     }
 
@@ -107,7 +104,7 @@ exports.curLoc = async (req, res) => {
     if (neighborsIdList) {
       const neighbors = users.reduce((acc, neighbor) => {
         const { _id: userId } = neighbor;
-        if (neighborsIdList.includes(userId.toString())) acc.push(neighbor);
+        if (neighborsIdList.includes(userId)) acc.push(neighbor);
         return acc;
       }, []);
       neighbors.map(neighbor => ({
@@ -217,9 +214,9 @@ const applyFeedback = async (id, value, Model) => {
 exports.feedback = async (req, res) => {
   try {
     // 올바른 태그들이 입력됐는지 확인한다.
-    const { id: cafeId } = req.params;
+    let { id: cafeId } = req.params; cafeId = ObjectId(cafeId);
+    let { _id: userId } = req.tokenPayload; userId = ObjectId(userId);
     const { feedback } = req.body;
-    const { _id: userId } = req.tokenPayload;
     const { value, error } = validateTag(feedback);
     if (error) return res.status(400).send('입력하신 태그가 스키마에 부합하지 않습니다.');
 

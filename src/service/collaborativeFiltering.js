@@ -1,3 +1,4 @@
+const { Types: { ObjectId } } = require('mongoose');
 const g = require('ger');
 
 const esm = new g.MemESM();
@@ -30,7 +31,7 @@ const cfWithUsers = async (users, targetUser) => {
     neighborsIdList = Object.entries(neighbourhood)
     // 타겟 본인 및 연관성이 0.5 미만인 유저들은 포함하지 않는다.
       .filter(user => user[1] < 1 && user[1] >= 0.5)
-      .map(user => user[0]);
+      .map(user => ObjectId(user[0]));
   }
 
   // 추천되는 태그를 구한다.
@@ -42,9 +43,9 @@ const cfWithUsers = async (users, targetUser) => {
   return { neighborsIdList, tag };
 };
 
-const cfWithCafelist = async ({ _id: userId }, tags, cafeArround) => {
+const cfWithCafelist = async ({ _id: userId }, tags, cafeAround) => {
   // 추천 알고리즘을 위한 액션을 구한다.
-  const targets = [...cafeArround, { _id: userId, top3Tags: tags }];
+  const targets = [...cafeAround, { _id: userId, top3Tags: tags }];
   const events = targets.flatMap((target) => {
     const { _id, top3Tags } = target;
     return top3Tags.map(tag => ({
@@ -69,7 +70,7 @@ const cfWithCafelist = async ({ _id: userId }, tags, cafeArround) => {
       .sort((a, b) => b[1] - a[1])
     // 타겟 본인 및 연관성이 0.5 미만인 유저들은 포함하지 않는다.
       .filter(user => (user[1] < 1) && (user[1] >= 0.5))
-      .map(cafe => cafe[0]);
+      .map(cafe => ObjectId(cafe[0]));
   }
   return recommendedCafeList;
 };

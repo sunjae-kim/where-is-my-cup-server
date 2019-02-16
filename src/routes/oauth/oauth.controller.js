@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const { Types: { ObjectId } } = require('mongoose');
 
 const { User, validateUser } = require('../../model/user');
 const { utility: { signAccessToken, signRefreshToken } } = require('../../lib');
@@ -60,7 +61,12 @@ exports.register = async (req, res) => {
 // GET /oauth/access
 exports.access = async (req, res) => {
   // 사용자가 보낸 토큰에서 payload 를 꺼낸다.
-  const { tokenPayload: { email, _id, name } } = req;
+  const { tokenPayload: { email, name } } = req;
+  let { tokenPayload: { _id } } = req; _id = ObjectId(_id);
+
+  // 사용자에게 보낼 사용자 정보를 꺼낸다.
+  const user = await User.findById(_id);
+  if (!user) return res.status(400).send('존재하지 않는 사용자입니다.');
 
   // Access 토큰을 발행한다.
   const secret = req.app.get('jwt-secret');
@@ -68,5 +74,5 @@ exports.access = async (req, res) => {
 
   // 토큰을 헤더에 세팅하고 유저정보를 응답한다.
   res.set('x-access-token', accessToken);
-  return res.status(200).send({ email, name });
+  return res.status(200).send({ user });
 };
