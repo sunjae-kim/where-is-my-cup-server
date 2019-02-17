@@ -84,7 +84,8 @@ exports.logError = (error, logger, req) => {
     method, originalUrl, body, headers,
   } = req;
   logger.error('==================================================');
-  logger.error(`@ ${method} ${originalUrl} : ${error.message}`);
+  logger.error(`@ ${method} ${originalUrl}`);
+  logger.error(error);
   logger.error(headers);
   logger.error(body);
 };
