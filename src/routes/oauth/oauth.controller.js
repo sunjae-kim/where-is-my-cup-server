@@ -2,8 +2,8 @@ const bcrypt = require('bcrypt');
 const { User, validateUser } = require('../../model/user');
 const { utility: { signToken, getLogger, logError } } = require('../../lib');
 
-const signAccessToken = signToken('accessToken');
-const signRefreshToken = signToken('refreshToken');
+const signAccessToken = signToken('x-access-token');
+const signRefreshToken = signToken('x-refresh-token');
 
 const logger = getLogger('oauth');
 
