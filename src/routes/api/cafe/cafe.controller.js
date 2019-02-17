@@ -1,6 +1,10 @@
 const { models: { Cafe, Tag, User }, validateMethods: { validateTag }, schemas: { tagSchema } } = require('../../../model');
-const { utility: { getDistance, getLogger, getRandom } } = require('../../../lib');
-const { collaborativeFiltering: { cfWithUsers, cfWithCafelist }, googleMap: { getLatLng } } = require('../../../service');
+const {
+  utility: {
+    getDistance, getLogger, getRandom, logError,
+  },
+} = require('../../../lib');
+const { collaborativeFiltering: { cfWithUsers, cfWithCafelist } } = require('../../../service');
 
 const logger = getLogger('api/cafe');
 const LAT_DISTANCE = 0.0018; // 약 200m
@@ -20,8 +24,7 @@ exports.getDetail = async (req, res) => {
     newCafe.distance = Math.floor(getDistance(latitude, longitude, lat, lng) * 1000);
     return res.status(200).send(cafe);
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/detail/:id' : headers: ${req.headers}`);
+    logError(error, logger, req);
     return res.status(400).send(error.message);
   }
 };
@@ -35,8 +38,7 @@ exports.getTagsForCafe = async (req, res) => {
     if (!tags) return res.status(400).send('아직 평가가 되지 않은 카페입니다.');
     return res.status(200).send(tags);
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/tags/:id' : params: ${req.params}`);
+    logError(error, logger, req);
     return res.status(400).send(error.message);
   }
 };
@@ -45,12 +47,7 @@ exports.getTagsForCafe = async (req, res) => {
 exports.curLoc = async (req, res) => {
   try {
     // 카페검색 bounds 를 지정한다.
-    const { address } = req.headers;
-    let { latitude, longitude } = req.headers;
-    if (address) {
-      const { lat, lng } = await getLatLng(address);
-      latitude = lat; longitude = lng;
-    }
+    const { latitude, longitude } = req.headers;
 
     const sLat = latitude - LAT_DISTANCE;
     const sLng = longitude - LNG_DISTANCE;
@@ -122,8 +119,7 @@ exports.curLoc = async (req, res) => {
 
     res.status(200).send({ cafeAround, recommendations });
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/curLoc' : headers: ${req.headers}`);
+    logError(error, logger, req);
     res.status(400).send(error);
   }
 };
@@ -152,8 +148,7 @@ exports.search = async (req, res) => {
     newCafeList.sort((a, b) => a.distance - b.distance);
     res.status(200).send(newCafeList);
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/search/:query' : headers: ${req.headers}`);
+    logError(error, logger, req);
     res.status(400).send(error.message);
   }
 };
@@ -222,8 +217,7 @@ exports.feedback = async (req, res) => {
 
     return res.status(201).send({ userResult, cafeResult });
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/feedback/:cafeId' : body: ${req.body}; params: ${req.params}`);
+    logError(error, logger, req);
     return res.status(400).send(error.message);
   }
 };

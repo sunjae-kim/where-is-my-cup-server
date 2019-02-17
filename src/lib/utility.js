@@ -78,3 +78,13 @@ exports.getRandom = (arr) => {
   }
   return result;
 };
+
+exports.logError = (error, logger, req) => {
+  const {
+    method, originalUrl, body, headers,
+  } = req;
+  logger.error('==================================================');
+  logger.error(`@ ${method} ${originalUrl} : ${error.message}`);
+  logger.error(headers);
+  logger.error(body);
+};

@@ -1,5 +1,5 @@
 const { models: { User } } = require('../../../model');
-const { utility: { getLogger } } = require('../../../lib');
+const { utility: { getLogger, logError } } = require('../../../lib');
 
 const logger = getLogger('api/users');
 
@@ -10,8 +10,7 @@ exports.deleteUser = async (req, res) => {
     const result = await User.findByIdAndRemove(_id);
     res.status(200).send(result);
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/api/users' : body: ${req.params}`);
+    logError(error, logger, req);
     res.status(400).send(error.message);
   }
 };
@@ -34,8 +33,7 @@ exports.getFavorites = async (req, res) => {
     const { favorites } = user;
     return res.status(200).send(favorites);
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/favorites' : body: ${req.params}`);
+    logError(error, logger, req);
     return res.status(400).send(error.message);
   }
 };
@@ -65,8 +63,7 @@ exports.postFavorites = async (req, res) => {
     );
     return res.status(201).send({ user });
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/favorites' : body: ${req.body}`);
+    logError(error, logger, req);
     return res.status(400).send(error.message);
   }
 };
@@ -93,8 +90,7 @@ exports.deleteFavorites = async (req, res) => {
     );
     return res.status(201).send({ user });
   } catch (error) {
-    logger.error(error.message);
-    logger.error(`At '/favorites' : body: ${req.body}`);
+    logError(error, logger, req);
     return res.status(400).send(error.message);
   }
 };
