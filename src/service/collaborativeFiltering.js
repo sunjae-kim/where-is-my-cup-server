@@ -123,7 +123,7 @@ const cfWithCafelist = async ({ _id: userId }, tags, cafeAround) => {
   logger.trace();
   logger.trace('Finish work');
   logger.trace('############################################################');
-
+  logger.trace();
   await ger.destroy_namespace('cafe');
   return recommendedCafeList;
 };
