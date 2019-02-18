@@ -1,7 +1,10 @@
 const route = require('express').Router();
 const controller = require('./user.controller');
+const { middlewares: { encryptPassword } } = require('../../../lib');
 
 route.delete('/', controller.deleteUser);
+
+route.put('/password', encryptPassword, controller.updatePassword);
 
 route.get('/list', controller.getList);
 

@@ -68,7 +68,7 @@ exports.headerParser = (req, res, next) => {
  *  `bcrypt` 모듈로 암호화를 진행한다. `saltRound` 는 10회 적용된다.
  *  비밀번호가 입력되지 않을 시 `403` status code 로 오류메세지를 응답한다.
  */
-exports.encrptPassword = async (req, res, next) => {
+exports.encryptPassword = async (req, res, next) => {
   const { password } = req.body;
   const saltRounds = 10;
   try {

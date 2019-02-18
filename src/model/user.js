@@ -29,10 +29,6 @@ usersSchema.statics.create = async function createUser(user) {
   return newUser;
 };
 
-usersSchema.statics.setTop3 = function setTop3(id, tags) {
-  return this.findOneAndUpdate({ _id: id }, { top3Tags: tags }, { new: true });
-};
-
 const validateUser = (user) => {
   const schema = {
     name: Joi.string().required(),

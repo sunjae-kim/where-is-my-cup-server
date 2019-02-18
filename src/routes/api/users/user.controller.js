@@ -15,6 +15,19 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+// PUT /api/users/password
+exports.updatePassword = async (req, res) => {
+  try {
+    const { _id } = req.tokenPayload;
+    const { password } = req.body;
+    const user = await User.findOneAndUpdate({ _id }, { password });
+    res.status(200).send(user);
+  } catch (error) {
+    logError(error, logger, req);
+    res.status(400).send(error.message);
+  }
+};
+
 // GET /api/users/list
 exports.getList = async (req, res) => {
   const allUsers = await User.find();
