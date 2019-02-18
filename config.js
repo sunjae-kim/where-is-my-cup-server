@@ -23,9 +23,14 @@ const config = {
           level: 'ERROR',
           appender: 'errorFile',
         },
+        duplicated: {
+          type: 'file',
+          filename: 'log/duplicated.log',
+        },
       },
       categories: {
         default: { appenders: ['app', 'errors'], level: 'TRACE' },
+        Duplicated: { appenders: ['duplicated'], level: 'WARN' },
       },
     },
   },

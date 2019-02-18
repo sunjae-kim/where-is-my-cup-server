@@ -37,7 +37,7 @@ const validateCafe = (cafe) => {
   return Joi.validate(cafe, schema);
 };
 
-const Cafe = model('Cafes', cafeSchema);
+const Cafe = model('cafelists', cafeSchema);
 
 module.exports = {
   cafeSchema, validateCafe, Cafe,

@@ -7,6 +7,7 @@ const {
 const { collaborativeFiltering: { cfWithUsers, cfWithCafelist } } = require('../../../service');
 
 const logger = getLogger('api/cafe');
+const duplicationLogger = getLogger('Duplicated');
 const LAT_DISTANCE = 0.0018; // 약 200m
 const LNG_DISTANCE = 0.00227; // 약 200m
 
@@ -61,15 +62,24 @@ exports.curLoc = async (req, res) => {
     });
 
     // 카페까지의 거리가 200m 이내인 카페로 추린다.
+    const checker = {};
     const [cafeAround, cafeIdList] = cafeList.reduce((acc, cafe) => {
-      const { location: { lat, lng } } = cafe;
+      const {
+        location: { lat, lng }, title, addresses, _id,
+      } = cafe;
+      const [firstAddress] = addresses;
+      if (checker[title] === firstAddress) {
+        duplicationLogger.warn(`${_id} ${title}`);
+        return acc;
+      }
+      checker[title] = firstAddress;
       const { _doc: newCafe } = cafe;
       const distance = Math.floor(getDistance(latitude, longitude, lat, lng) * 1000);
       newCafe.distance = distance;
       if (distance <= 200) {
-        const { _id } = newCafe;
+        const { _id: cafeId } = newCafe;
         acc[0].push(newCafe);
-        acc[1].push(_id);
+        acc[1].push(cafeId);
       }
       return acc;
     }, [[], []]);
@@ -138,14 +148,24 @@ exports.search = async (req, res) => {
     });
 
     // 카페까지의 거리를 property 에 추가한다.
+    const checker = {};
     const newCafeList = cafeList.reduce((acc, cafe) => {
-      const { location: { lat, lng } } = cafe;
+      const {
+        location: { lat, lng }, title, addresses, _id,
+      } = cafe;
+      const [firstAddress] = addresses;
+      if (checker[title] === firstAddress) {
+        duplicationLogger.warn(`${_id} ${title}`);
+        return acc;
+      }
+      checker[title] = firstAddress;
       const { _doc: newCafe } = { ...cafe };
       newCafe.distance = Math.floor(getDistance(latitude, longitude, lat, lng) * 1000);
       acc.push(newCafe);
       return acc;
     }, []);
     newCafeList.sort((a, b) => a.distance - b.distance);
+
     res.status(200).send(newCafeList);
   } catch (error) {
     logError(error, logger, req);

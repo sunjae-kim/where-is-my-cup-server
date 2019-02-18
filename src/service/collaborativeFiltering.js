@@ -48,7 +48,7 @@ const cfWithUsers = async (users, targetUser) => {
       });
     logger.trace(`Found '${neighborsIdList.length}' neighbors!`);
   } else {
-    logger.warn('Found no neighbourhood!');
+    logger.warn(' Found no neighbourhood!');
   }
 
   // 추천되는 태그를 구한다.
@@ -61,7 +61,7 @@ const cfWithUsers = async (users, targetUser) => {
     logger.trace('#### recommendated tag ####');
     logger.debug(`'${tag}'`);
   } else {
-    logger.warn('Not enough data to recommend tag!');
+    logger.warn(' Not enough data to recommend tag!');
   }
 
   await ger.destroy_namespace('user');
