@@ -94,14 +94,17 @@ exports.curLoc = async (req, res) => {
     const { neighborsIdList, tag } = await cfWithUsers(users, user);
 
     // (Top 3 태그) + (추천된 태그) 로 추천할 카페를 찾는다.
-    const recommendations = [];
+    const recommendations = []; const recommendatedList = {};
     const { top3Tags } = user;
     const tags = tag ? [...top3Tags, tag] : top3Tags;
     const cafeIdListRecommendedByTag = await cfWithCafelist(user, tags, cafeAround);
     if (cafeIdListRecommendedByTag) {
       cafeAround.forEach((cafe) => {
         const { _id: cafeId } = cafe;
-        if (cafeIdListRecommendedByTag.includes(cafeId.toString())) recommendations.push(cafe);
+        if (cafeIdListRecommendedByTag.includes(cafeId.toString())) {
+          recommendatedList[cafeId.toString()] = true;
+          recommendations.push(cafe);
+        }
       });
     }
 
@@ -114,9 +117,10 @@ exports.curLoc = async (req, res) => {
       }, []);
       neighbors.map(neighbor => ({
         [neighbor.name]: neighbor.favorites.forEach((favorite) => {
-          const { location: { lat, lng } } = favorite;
-          const distance = getDistance(latitude, longitude, lat, lng);
-          if (distance <= 0.2 && !recommendations.includes(favorite)) {
+          const { location: { lat, lng }, _doc, _id: cafeId } = favorite;
+          const distance = Math.floor(getDistance(latitude, longitude, lat, lng) * 1000);
+          _doc.distance = distance;
+          if (distance <= 200 && !recommendatedList[cafeId.toString()]) {
             recommendations.push(favorite);
           }
         }),
