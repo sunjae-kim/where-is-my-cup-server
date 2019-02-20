@@ -10,8 +10,9 @@ const usersSchema = new Schema({
   oauth: { type: String, enum: ['google', 'kakao', 'local'], required: true },
   createdAt: { type: Date, default: Date.now },
   tags: { type: Schema.Types.ObjectId, ref: Tag },
-  top3Tags: [{ type: String, enum: Object.keys(tagSchema.obj) }],
   favorites: [{ type: Schema.Types.ObjectId, ref: Cafe }],
+  top3Tags: [{ type: String, enum: Object.keys(tagSchema.obj) }],
+  cafeFeedbacked: Object,
 });
 
 usersSchema.pre('save', function preSave(next) {
@@ -39,6 +40,7 @@ const validateUser = (user) => {
     tags: Joi.string(),
     favorites: Joi.array(),
     top3Tags: Joi.array(),
+    cafeFeedbacked: Joi.object(),
   };
   return Joi.validate(user, schema);
 };

@@ -8,8 +8,11 @@ const { collaborativeFiltering: { cfWithUsers, cfWithCafelist } } = require('../
 
 const logger = getLogger('api/cafe');
 const duplicationLogger = getLogger('Duplicated');
+
+// Constant
 const LAT_DISTANCE = 0.0018; // 약 200m
 const LNG_DISTANCE = 0.00227; // 약 200m
+const A_DAY = 1000 * 60 * 60 * 24;
 
 // GET /api/cafe/detail/:id
 exports.getDetail = async (req, res) => {
@@ -61,15 +64,20 @@ exports.curLoc = async (req, res) => {
       'location.lng': { $gte: sLng, $lte: eLng },
     });
 
+    // User 정보를 가져온다.
+    const { _id } = req.tokenPayload;
+    const user = await User.findById(_id);
+    const { cafeFeedbacked } = user;
+
     // 카페까지의 거리가 200m 이내인 카페로 추린다.
     const checker = {};
     const [cafeAround, cafeIdList] = cafeList.reduce((acc, cafe) => {
       const {
-        location: { lat, lng }, title, addresses, _id,
+        location: { lat, lng }, title, addresses, _id: cafeId,
       } = cafe;
       const [firstAddress] = addresses;
       if (checker[title] === firstAddress) {
-        duplicationLogger.warn(`${_id} ${title}`);
+        duplicationLogger.warn(`${cafeId} ${title}`);
         return acc;
       }
       checker[title] = firstAddress;
@@ -77,20 +85,27 @@ exports.curLoc = async (req, res) => {
       const distance = Math.floor(getDistance(latitude, longitude, lat, lng) * 1000);
       newCafe.distance = distance;
       if (distance <= 200) {
-        const { _id: cafeId } = newCafe;
+        const { _id: newCafeId } = newCafe;
+
+        if (cafeFeedbacked && cafeFeedbacked[newCafeId]) {
+          const feedbackTime = cafeFeedbacked[newCafeId];
+          const difference = Date.now() - Number(feedbackTime);
+          newCafe.hasFeedbacked = !(difference > A_DAY);
+        } else {
+          newCafe.hasFeedbacked = false;
+        }
+
         acc[0].push(newCafe);
-        acc[1].push(cafeId);
+        acc[1].push(newCafeId);
       }
       return acc;
     }, [[], []]);
     cafeAround.sort((a, b) => a.distance - b.distance);
 
     // 주위 카페를 좋아하는 유저를 찾는다.
-    const { _id } = req.tokenPayload;
     const users = await User.find({ favorites: { $in: cafeIdList }, _id: { $ne: _id } }).populate('favorites');
 
     // 유저들 중 성향이 비슷한 neighbor 및 추천될만한 Tag 를 찾는다.
-    const user = await User.findById(_id);
     const { neighborsIdList, tag } = await cfWithUsers(users, user);
 
     // (Top 3 태그) + (추천된 태그) 로 추천할 카페를 찾는다.
@@ -238,6 +253,8 @@ exports.feedback = async (req, res) => {
 
     const userResult = await applyFeedback(userId, value, User);
     const cafeResult = await applyFeedback(cafeId, value, Cafe);
+
+    await User.findByIdAndUpdate(userId, { $set: { [`cafeFeedbacked.${cafeId}`]: Date.now() } });
 
     return res.status(201).send({ userResult, cafeResult });
   } catch (error) {

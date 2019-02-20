@@ -71,7 +71,7 @@ exports.postFavorites = async (req, res) => {
     // 추가돼있지 않다면 로직을 수행한다.
     user = await User.findOneAndUpdate(
       { _id },
-      { $set: { favorites: [...favorites, cafeId] } },
+      { $push: { favorites: cafeId } },
       { new: true },
     );
     return res.status(201).send({ user });
